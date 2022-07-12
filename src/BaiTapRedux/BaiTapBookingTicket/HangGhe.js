@@ -1,84 +1,96 @@
 import React, { Component } from "react";
-import {connect} from 'react-redux'
-import { datGheAction } from "../../Redux/actions/BaiTapBookingActions";
+import danhSachDataGhe from "../../Data/danhSachGhe.json";
+import { connect } from "react-redux";
 
 class HangGhe extends Component {
-  renderGhe = () => {
-    return this.props.hangGhe.danhSachGhe.map((ghe, index) => {
-      if (ghe.hang === "") {
-        return <span>{ghe.soGhe}</span>;
+  renderNumber = () => {
+    // render số ghế hàng đầu 
+    let numberChair = danhSachDataGhe.map((item) => {
+      if (item.hang === "") {
+        let mangSo = [];
+        for (let i = 0; i < item.danhSachGhe.length; i++) {
+          mangSo.push(
+            <th
+              className="rowNumber text-center"
+              key={item.danhSachGhe[i].soGhe}
+            >
+              {item.danhSachGhe[i].soGhe}
+            </th>
+          );
+        }
+        return mangSo;
       }
-
-      // xét ghế đã được đặt
-      let cssGheDaDat = "";
-      let disable = false;
-      if (ghe.daDat) {
-        cssGheDaDat = "gheDuocChon";
-        disable = true;
-      }
-
-      // xét ghế đang đặt
-      let cssGheDangDat = "";
-      let indexGheDangDat = this.props.danhSachGheDangDat.findIndex(gheDangDat => gheDangDat.soGhe === ghe.soGhe);
-      if(indexGheDangDat !== -1) {
-        cssGheDangDat = "gheDangChon"
-      }
-      
-      return (
-        <button
-          onClick={() => {
-            this.props.datGhe(ghe)
-          }}
-          key={index}
-          disabled={disable}
-          className={`ghe ${cssGheDaDat} ${cssGheDangDat}`}
-        >
-          {ghe.soGhe}
-        </button>
-      );
     });
+    return numberChair;
   };
+
   renderHangGhe = () => {
-    if (this.props.soHangGhe === 0) {
-      return <div>{this.renderRowNumber()}</div>;
-    } else {
-      return (
-        <div>
-          {" "}
-          {this.props.hangGhe.hang}
-          {this.renderGhe()}
-        </div>
-      );
-    }
+    let stringChair = danhSachDataGhe.map((item, index) => {
+      // render cột chữ đầu
+      if (item.hang !== "") {
+        let mangChu = [];
+        mangChu.push(
+          <td key={item.hang} className="rowNumber">
+            {item.hang}
+          </td>
+        );
+
+        for (let i = 0; i < item.danhSachGhe.length; i++) {
+          // xét ghế đã đặt
+          let cssGheDaChon = "";
+          let disabled = false;
+          if (item.danhSachGhe[i].daDat) {
+            cssGheDaChon = "gheDuocChon";
+            disabled = true;
+          }
+
+          // xét ghế đang đặt
+          let cssGheDangChon = "";
+          let indexGheDangChon = this.props.mangGheDangDat.findIndex(
+            (gheDangDat) => gheDangDat.soGhe === item.danhSachGhe[i].soGhe
+          );
+          if(indexGheDangChon !== -1) {
+            cssGheDangChon = "gheDangChon";
+          }
+
+          // render chữ số ghế
+          mangChu.push(
+            <td key={item.danhSachGhe[i].soGhe}>
+              <button
+                onClick={() =>
+                  this.props.dispatch({
+                    type: "DAT_GHE",
+                    payload: item.danhSachGhe[i],
+                  })
+                }
+                disabled={disabled}
+                className={`ghe ${cssGheDaChon} ${cssGheDangChon}`}
+              >
+                {item.danhSachGhe[i].soGhe}
+              </button>
+            </td>
+          );
+        }
+        return <tr key={index}>{mangChu}</tr>;
+      }
+    });
+    return stringChair;
   };
-  renderRowNumber = () => {
-    return this.props.hangGhe.danhSachGhe.map((ghe, index) => {
-      return (
-        <button key={index} className="rowNumber">{ghe.soGhe}</button>
-      )
-    })
-  };
+
   render() {
     return (
-      <div
-        style={{
-          marginTop: "10px",
-          marginLeft: "100px",
-          fontWeight: "bold",
-          fontSize: "30px",
-        }}
-        className={"text-left text-warning"}
-      >
-        {this.renderHangGhe()}
+      <div style={{ padding: "0 100px" }}>
+        <table className="table" style={{ border: "none" }}>
+          <thead>
+            <tr>
+              <td></td>
+              {this.renderNumber()}
+            </tr>
+          </thead>
+          <tbody>{this.renderHangGhe()}</tbody>
+        </table>
       </div>
     );
   }
 }
-const mapDispatchToProps = dispatch => {
-  return{
-    datGhe: (ghe) => {
-      dispatch(datGheAction(ghe))
-    }
-  }
-}
-export default connect(state => ({...state.BaiTapBookingReducer}), mapDispatchToProps)(HangGhe)
+export default connect((state) => ({ ...state.BookingTicketReducer }))(HangGhe);
